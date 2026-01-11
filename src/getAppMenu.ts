@@ -5,33 +5,43 @@ import SavedList from './SavedList';
 import { textCanvas } from './helpers/getElements';
 
 /**
- * Exports the typewriter canvas as a clean white paper image
+ * Exports the typewriter canvas as a clean white paper image in 2K resolution
  */
 const exportAsImage = () => {
-  const { width, height } = textCanvas;
+  // Target 2K resolution (2560x1440)
+  const targetWidth = 2560;
+  const targetHeight = 1440;
 
-  // Create a new canvas for the export
+  // Calculate scale factor from current canvas
+  const scaleX = targetWidth / textCanvas.width;
+  const scaleY = targetHeight / textCanvas.height;
+  const scale = Math.max(scaleX, scaleY);
+
+  // Create a new canvas for the export at 2K resolution
   const exportCanvas = document.createElement('canvas');
-  exportCanvas.width = width;
-  exportCanvas.height = height;
+  exportCanvas.width = targetWidth;
+  exportCanvas.height = targetHeight;
   const ctx = exportCanvas.getContext('2d')!;
 
   // Draw clean white paper background
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
+  ctx.fillRect(0, 0, targetWidth, targetHeight);
 
-  // Add very subtle paper texture (optional, very light)
-  const imageData = ctx.getImageData(0, 0, width, height);
+  // Add very subtle paper texture
+  const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
   const { data } = imageData;
   for (let i = 0; i < data.length; i += 4) {
-    const noise = (Math.random() - 0.5) * 8; // Very subtle noise
-    data[i] = Math.min(255, Math.max(245, data[i] + noise)); // R - keep it white
-    data[i + 1] = Math.min(255, Math.max(245, data[i + 1] + noise)); // G
-    data[i + 2] = Math.min(255, Math.max(245, data[i + 2] + noise)); // B
+    const noise = (Math.random() - 0.5) * 8;
+    data[i] = Math.min(255, Math.max(245, data[i] + noise));
+    data[i + 1] = Math.min(255, Math.max(245, data[i + 1] + noise));
+    data[i + 2] = Math.min(255, Math.max(245, data[i + 2] + noise));
   }
   ctx.putImageData(imageData, 0, 0);
 
-  // Draw the text canvas on top
+  // Scale and draw the text canvas to fit 2K resolution
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.scale(scale, scale);
   ctx.drawImage(textCanvas, 0, 0);
 
   // Export as PNG and trigger download
