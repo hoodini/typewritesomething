@@ -1,10 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-// Constants for the typewriter
-const TYPEWRITER_COLOR = 0x4a4a4a; // Medium gray for visibility
-const ACCENT_COLOR = 0xb87333; // Copper/bronze for accents
-const METAL_COLOR = 0x7a7a7a; // Lighter metallic gray
+// Design System Colors for the typewriter
+const TYPEWRITER_COLOR = 0x4b5052; // Matte Gunmetal
+const ACCENT_COLOR = 0x8a7c4f; // Oxidized Brass
+const METAL_COLOR = 0x6a7073; // Gunmetal light
+const RIBBON_RED = 0x8b3344; // Burgundy red for ink ribbon
+const KEY_COLOR = 0x2a2a2a; // Dark key caps
+const KEY_RING_COLOR = 0x8a7c4f; // Brass key rings
 
 interface TypeBar {
   mesh: THREE.Mesh;
@@ -77,7 +80,7 @@ export class TypewriterScene3D {
 
     // Scene setup
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x2d3748); // Slate gray background
+    this.scene.background = new THREE.Color(0x3a3d3f); // Matte Gunmetal Dark background
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(
@@ -208,12 +211,12 @@ export class TypewriterScene3D {
     this.typewriterBody.position.y = 0;
     this.scene.add(this.typewriterBody);
 
-    // Floor/desk surface
+    // Floor/desk surface - warm wood tone
     const deskGeometry = new THREE.PlaneGeometry(30, 30);
     const deskMaterial = new THREE.MeshStandardMaterial({
-      color: 0x3d2b1f,
-      roughness: 0.8,
-      metalness: 0.1,
+      color: 0x5d4037, // Warm brown wood
+      roughness: 0.7,
+      metalness: 0.05,
     });
     const desk = new THREE.Mesh(deskGeometry, deskMaterial);
     desk.rotation.x = -Math.PI / 2;
@@ -261,8 +264,6 @@ export class TypewriterScene3D {
     // Key layout (QWERTY simplified)
     const rows = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 
-    const keyGeometry = new THREE.CylinderGeometry(0.22, 0.26, 0.18, 16);
-
     rows.forEach((row, rowIndex) => {
       const rowOffset = rowIndex * 0.12;
       const y = 3.1 - rowIndex * 0.15;
@@ -272,35 +273,68 @@ export class TypewriterScene3D {
         const char = row[i];
         const x = (i - row.length / 2 + 0.5) * 0.52 + rowOffset * 0.25;
 
-        // Each key has a dark body with lighter top
-        const keyMaterial = new THREE.MeshStandardMaterial({
-          color: 0x3a3a3a,
-          roughness: 0.5,
-          metalness: 0.4,
-        });
+        // Create circular key with brass ring - matching design system
+        const keyGroup = new THREE.Group();
 
-        const key = new THREE.Mesh(keyGeometry.clone(), keyMaterial);
-        key.position.set(x, y, z);
-        key.rotation.x = (Math.PI / 10) * (rowIndex + 1);
-        key.castShadow = true;
+        // Brass outer ring
+        const ringGeometry = new THREE.TorusGeometry(0.22, 0.04, 8, 24);
+        const ringMaterial = new THREE.MeshStandardMaterial({
+          color: KEY_RING_COLOR,
+          roughness: 0.4,
+          metalness: 0.7,
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.rotation.x = Math.PI / 2;
+        keyGroup.add(ring);
+
+        // Dark key cap center
+        const keyGeometry = new THREE.CylinderGeometry(0.18, 0.2, 0.15, 16);
+        const keyMaterial = new THREE.MeshStandardMaterial({
+          color: KEY_COLOR,
+          roughness: 0.6,
+          metalness: 0.3,
+        });
+        const key = new THREE.Mesh(keyGeometry, keyMaterial);
+        key.position.y = -0.02;
+        keyGroup.add(key);
+
+        keyGroup.position.set(x, y, z);
+        keyGroup.rotation.x = (Math.PI / 10) * (rowIndex + 1);
+        keyGroup.castShadow = true;
 
         this.keys.set(char, key);
-        keyboardGroup.add(key);
+        keyboardGroup.add(keyGroup);
       }
     });
 
-    // Space bar - wider and more prominent
+    // Space bar - with brass frame
+    const spaceGroup = new THREE.Group();
+
+    // Brass frame for space bar
+    const frameGeometry = new THREE.BoxGeometry(3.0, 0.08, 0.45);
+    const frameMaterial = new THREE.MeshStandardMaterial({
+      color: KEY_RING_COLOR,
+      roughness: 0.4,
+      metalness: 0.7,
+    });
+    const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+    spaceGroup.add(frame);
+
+    // Dark space bar center
     const spaceGeometry = new THREE.BoxGeometry(2.8, 0.12, 0.35);
     const spaceMaterial = new THREE.MeshStandardMaterial({
-      color: 0x3a3a3a,
-      roughness: 0.5,
-      metalness: 0.4,
+      color: KEY_COLOR,
+      roughness: 0.6,
+      metalness: 0.3,
     });
     const spaceBar = new THREE.Mesh(spaceGeometry, spaceMaterial);
-    spaceBar.position.set(0, 2.6, 3.5);
-    spaceBar.rotation.x = Math.PI / 8;
+    spaceBar.position.y = 0.02;
+    spaceGroup.add(spaceBar);
+
+    spaceGroup.position.set(0, 2.6, 3.5);
+    spaceGroup.rotation.x = Math.PI / 8;
     this.keys.set(' ', spaceBar);
-    keyboardGroup.add(spaceBar);
+    keyboardGroup.add(spaceGroup);
 
     this.typewriterBody.add(keyboardGroup);
   }
@@ -449,8 +483,8 @@ export class TypewriterScene3D {
   }
 
   private clearPaper(): void {
-    // Off-white paper background
-    this.paperCtx.fillStyle = '#faf8f5';
+    // Aged cream paper background - matching design system
+    this.paperCtx.fillStyle = '#F2E8C9';
     this.paperCtx.fillRect(
       0,
       0,
@@ -458,7 +492,7 @@ export class TypewriterScene3D {
       this.paperCanvas.height
     );
 
-    // Add subtle paper texture
+    // Add subtle paper texture for vintage look
     const imageData = this.paperCtx.getImageData(
       0,
       0,
@@ -467,10 +501,11 @@ export class TypewriterScene3D {
     );
     const { data } = imageData;
     for (let i = 0; i < data.length; i += 4) {
-      const noise = (Math.random() - 0.5) * 6;
-      data[i] = Math.min(255, Math.max(245, data[i] + noise));
-      data[i + 1] = Math.min(255, Math.max(245, data[i + 1] + noise));
-      data[i + 2] = Math.min(255, Math.max(245, data[i + 2] + noise));
+      const noise = (Math.random() - 0.5) * 8;
+      // Keep within aged cream color range
+      data[i] = Math.min(245, Math.max(230, data[i] + noise)); // R
+      data[i + 1] = Math.min(235, Math.max(220, data[i + 1] + noise)); // G
+      data[i + 2] = Math.min(210, Math.max(190, data[i + 2] + noise)); // B
     }
     this.paperCtx.putImageData(imageData, 0, 0);
 
@@ -479,12 +514,12 @@ export class TypewriterScene3D {
   }
 
   private createDecorations(): void {
-    // Brand name plate
+    // Brand name plate - oxidized brass
     const plateGeometry = new THREE.BoxGeometry(2, 0.3, 0.05);
     const plateMaterial = new THREE.MeshStandardMaterial({
-      color: 0xc4a35a,
-      roughness: 0.3,
-      metalness: 0.8,
+      color: ACCENT_COLOR,
+      roughness: 0.4,
+      metalness: 0.7,
     });
     const plate = new THREE.Mesh(plateGeometry, plateMaterial);
     plate.position.set(0, 3.3, 0.5);
@@ -519,11 +554,11 @@ export class TypewriterScene3D {
     leverGroup.position.set(-4.5, 5.5, -1.2);
     this.carriage.add(leverGroup);
 
-    // Ribbon spools - positioned on the typewriter body
+    // Ribbon spools - positioned on the typewriter body with brass accents
     const spoolGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.25, 16);
     const spoolMaterial = new THREE.MeshStandardMaterial({
-      color: 0x2a2a2a,
-      roughness: 0.7,
+      color: KEY_COLOR,
+      roughness: 0.6,
       metalness: 0.3,
     });
 
@@ -535,10 +570,32 @@ export class TypewriterScene3D {
     rightSpool.position.set(1.5, 4.2, -0.8);
     this.typewriterBody.add(rightSpool);
 
-    // Ink ribbon between spools
+    // Red ink ribbon wrapped on spools - matching design system
+    const ribbonWrapGeometry = new THREE.CylinderGeometry(0.28, 0.28, 0.22, 16);
+    const ribbonWrapMaterial = new THREE.MeshStandardMaterial({
+      color: RIBBON_RED,
+      roughness: 0.8,
+      metalness: 0.1,
+    });
+
+    const leftRibbonWrap = new THREE.Mesh(
+      ribbonWrapGeometry,
+      ribbonWrapMaterial
+    );
+    leftRibbonWrap.position.set(-1.5, 4.2, -0.8);
+    this.typewriterBody.add(leftRibbonWrap);
+
+    const rightRibbonWrap = new THREE.Mesh(
+      ribbonWrapGeometry,
+      ribbonWrapMaterial
+    );
+    rightRibbonWrap.position.set(1.5, 4.2, -0.8);
+    this.typewriterBody.add(rightRibbonWrap);
+
+    // Ink ribbon between spools - burgundy red
     const ribbonGeometry = new THREE.BoxGeometry(2.5, 0.02, 0.25);
     const ribbonMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1a1a1a,
+      color: RIBBON_RED,
       roughness: 0.9,
       metalness: 0,
     });
