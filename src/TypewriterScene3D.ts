@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 // Constants for the typewriter
 const TYPEWRITER_COLOR = 0x2a2a2a; // Dark charcoal
@@ -31,6 +32,8 @@ export class TypewriterScene3D {
   private container: HTMLElement;
 
   private animationId: number | null = null;
+
+  private controls!: OrbitControls;
 
   // Typewriter components
   private typewriterBody!: THREE.Group;
@@ -100,6 +103,15 @@ export class TypewriterScene3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
+
+    // Orbit controls for camera rotation
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.05;
+    this.controls.target.set(0, 3, 0); // Focus on typewriter center
+    this.controls.minDistance = 5;
+    this.controls.maxDistance = 30;
+    this.controls.maxPolarAngle = Math.PI / 2; // Don't go below the desk
 
     // Initialize
     this.setupLights();
@@ -580,7 +592,9 @@ export class TypewriterScene3D {
 
     // Draw character on paper canvas
     this.paperCtx.fillStyle = '#150904';
-    this.paperCtx.font = 'bold 20px "Special Elite", monospace';
+    // Use Courier New as fallback - it's more universally available
+    this.paperCtx.font = 'bold 18px "Courier New", Courier, monospace';
+    this.paperCtx.textBaseline = 'top';
 
     // Add slight randomness for typewriter imperfection
     const offsetX = (Math.random() - 0.5) * 2;
@@ -595,6 +609,9 @@ export class TypewriterScene3D {
     this.paperCtx.rotate(rotation);
     this.paperCtx.fillText(char, 0, 0);
     this.paperCtx.restore();
+
+    // Debug: log that character was printed
+    // console.log(`Printed: ${char} at (${this.paperPosition.x}, ${this.paperPosition.y})`);
 
     // Update texture
     this.paperTexture.needsUpdate = true;
@@ -779,9 +796,8 @@ export class TypewriterScene3D {
       this.carriage.position.x = this.carriageCurrentX;
     }
 
-    // Subtle ambient animation
-    const time = Date.now() * 0.001;
-    this.camera.position.y = 8 + Math.sin(time * 0.5) * 0.1;
+    // Update orbit controls
+    this.controls.update();
 
     this.renderer.render(this.scene, this.camera);
   };
@@ -794,6 +810,7 @@ export class TypewriterScene3D {
       cancelAnimationFrame(this.animationId);
     }
 
+    this.controls.dispose();
     this.renderer.dispose();
     this.container.removeChild(this.renderer.domElement);
 
