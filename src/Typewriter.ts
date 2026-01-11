@@ -9,6 +9,15 @@ const FONT_SIZE = 26;
 const TEXT_COLOR = '#150904';
 const CURSOR_COLOR = '#4787ea';
 const GLOBAL_ALPHA = 0.72;
+
+/**
+ * Checks if a character is Hebrew (RTL)
+ * Hebrew Unicode range: U+0590 to U+05FF
+ */
+const isHebrewChar = (char: string): boolean => {
+  const code = char.charCodeAt(0);
+  return code >= 0x0590 && code <= 0x05ff;
+};
 const letterSize = parseInt(
   String(Math.min(FONT_SIZE, window.innerWidth / 17)),
   10
@@ -58,15 +67,26 @@ export class TypeWriter implements TypeWriterClass {
       this.cursor.update(new Vector(_x, _y));
       return;
     }
-    // iterate characters and move cursor right
+    // iterate characters and move cursor (right for LTR, left for RTL like Hebrew)
     for (let i = 0, len = _chars.length; i < len; i += 1) {
+      const char = _chars[i];
+      const isRTL = isHebrewChar(char);
+
+      // For RTL characters, move cursor left first, then place character
+      if (isRTL) {
+        this.cursor.moveleft();
+      }
+
       const {
         position: { x, y },
       } = this.cursor;
-      const char = _chars[i];
 
       this.chars.push(new Character(this, char, x, y));
-      this.cursor.moveright();
+
+      // For LTR characters, move cursor right after placing
+      if (!isRTL) {
+        this.cursor.moveright();
+      }
     }
   };
 
