@@ -104,7 +104,7 @@ export class TypewriterScene3D {
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
-    // Orbit controls for camera rotation
+    // Orbit controls for camera rotation (works with mouse and touch)
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.05;
@@ -112,6 +112,20 @@ export class TypewriterScene3D {
     this.controls.minDistance = 5;
     this.controls.maxDistance = 30;
     this.controls.maxPolarAngle = Math.PI / 2; // Don't go below the desk
+
+    // Mobile touch support
+    this.controls.enablePan = true;
+    this.controls.enableZoom = true;
+    this.controls.touchAction = 'none'; // Prevent browser scroll interference
+    this.controls.rotateSpeed = 0.8;
+    this.controls.zoomSpeed = 1.2;
+    this.controls.panSpeed = 0.8;
+
+    // For mobile: reduce shadow quality for performance
+    if (this.isMobileDevice()) {
+      this.renderer.shadowMap.type = THREE.BasicShadowMap;
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    }
 
     // Initialize
     this.setupLights();
@@ -123,29 +137,54 @@ export class TypewriterScene3D {
   }
 
   private setupLights(): void {
-    // Ambient light for overall illumination
-    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+    // Ambient light for soft overall illumination
+    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
     this.scene.add(ambient);
 
-    // Main key light (warm desk lamp feel)
-    const keyLight = new THREE.SpotLight(0xfff5e6, 1.5);
-    keyLight.position.set(-5, 15, 10);
-    keyLight.angle = Math.PI / 4;
-    keyLight.penumbra = 0.5;
+    // Hemisphere light for natural sky/ground lighting
+    const hemiLight = new THREE.HemisphereLight(0xffeeb1, 0x080820, 0.4);
+    this.scene.add(hemiLight);
+
+    // Main key light (warm desk lamp feel) - positioned like an overhead lamp
+    const keyLight = new THREE.SpotLight(0xfff5e6, 2.0);
+    keyLight.position.set(0, 20, 8);
+    keyLight.angle = Math.PI / 5;
+    keyLight.penumbra = 0.6;
+    keyLight.decay = 1.5;
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 2048;
     keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.bias = -0.0001;
     this.scene.add(keyLight);
 
-    // Fill light
-    const fillLight = new THREE.DirectionalLight(0xe6f0ff, 0.3);
-    fillLight.position.set(5, 5, -5);
+    // Secondary spotlight for paper illumination
+    const paperLight = new THREE.SpotLight(0xffffff, 1.2);
+    paperLight.position.set(0, 12, 0);
+    paperLight.target.position.set(0, 5.5, -1.2); // Aim at paper
+    paperLight.angle = Math.PI / 6;
+    paperLight.penumbra = 0.8;
+    this.scene.add(paperLight);
+    this.scene.add(paperLight.target);
+
+    // Fill light from the right (cool tone for contrast)
+    const fillLight = new THREE.DirectionalLight(0xe6f0ff, 0.4);
+    fillLight.position.set(8, 6, 5);
     this.scene.add(fillLight);
 
-    // Rim light for drama
-    const rimLight = new THREE.PointLight(0xff9966, 0.5);
-    rimLight.position.set(-10, 5, -5);
+    // Back fill light (soft)
+    const backFill = new THREE.DirectionalLight(0xffffff, 0.2);
+    backFill.position.set(-5, 8, -8);
+    this.scene.add(backFill);
+
+    // Warm rim light for dramatic edge highlights
+    const rimLight = new THREE.PointLight(0xff9966, 0.6);
+    rimLight.position.set(-12, 6, -3);
     this.scene.add(rimLight);
+
+    // Cool accent light from opposite side
+    const accentLight = new THREE.PointLight(0x6699ff, 0.3);
+    accentLight.position.set(12, 4, 2);
+    this.scene.add(accentLight);
   }
 
   private createTypewriter(): void {
@@ -504,6 +543,15 @@ export class TypewriterScene3D {
     this.typewriterBody.add(ribbon);
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  private isMobileDevice(): boolean {
+    return (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      ) || window.innerWidth < 768
+    );
+  }
+
   private setupEventListeners(): void {
     // Handle window resize
     window.addEventListener('resize', () => {
@@ -513,6 +561,11 @@ export class TypewriterScene3D {
       this.camera.aspect = width / height;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(width, height);
+    });
+
+    // Prevent context menu on long press (mobile)
+    this.renderer.domElement.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
     });
   }
 

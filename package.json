@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "start": "npm run watch",
-    "build": "NODE_ENV=production rollup -c",
+    "build": "rollup -c",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d . --src \"{index.html,manifest.json,favicon.ico,dist/**/*,static/**/*}\"",
     "lint": "eslint ./src --ext .js,.ts",
     "test:coverage": "jest --coverage",
     "test": "jest",
@@ -49,6 +51,7 @@
     "eslint-config-prettier": "^7.2.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^3.4.1",
+    "gh-pages": "^6.3.0",
     "husky": "^4.3.8",
     "jest": "^27.5.1",
     "lint-staged": "^10.5.4",
@@ -57,13 +60,13 @@
     "tslib": "^2.6.2",
     "typescript": "^4.9.5"
   },
-  "homepage": "https://typewritesomething.com",
+  "homepage": "https://hoodini.github.io/typewritesomething",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bozdoz/typewritesomething"
+    "url": "https://github.com/hoodini/typewritesomething"
   },
   "bugs": {
-    "url": "https://github.com/bozdoz/typewritesomething/issues"
+    "url": "https://github.com/hoodini/typewritesomething/issues"
   },
   "keywords": [
     "typewriter",
