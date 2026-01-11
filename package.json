@@ -6,8 +6,8 @@
   "scripts": {
     "start": "npm run watch",
     "build": "rollup -c",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d . --src \"{index.html,manifest.json,favicon.ico,dist/**/*,static/**/*}\"",
+    "predeploy": "npm run build && node -e \"const fs=require('fs');const path=require('path');const copyRecursive=(src,dest)=>{if(!fs.existsSync(dest))fs.mkdirSync(dest,{recursive:true});fs.readdirSync(src).forEach(f=>{const s=path.join(src,f),d=path.join(dest,f);fs.statSync(s).isDirectory()?copyRecursive(s,d):fs.copyFileSync(s,d)})};fs.rmSync('.deploy',{recursive:true,force:true});fs.mkdirSync('.deploy');['index.html','manifest.json','favicon.ico'].forEach(f=>fs.existsSync(f)&&fs.copyFileSync(f,'.deploy/'+f));copyRecursive('dist','.deploy/dist');copyRecursive('static','.deploy/static');fs.writeFileSync('.deploy/.gitignore','');\"",
+    "deploy": "gh-pages -d .deploy",
     "lint": "eslint ./src --ext .js,.ts",
     "test:coverage": "jest --coverage",
     "test": "jest",
