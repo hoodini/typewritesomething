@@ -6,15 +6,16 @@ import { textCanvas } from './helpers/getElements';
 
 /**
  * Exports the typewriter canvas as a clean white paper image in 2K resolution
+ * @param sourceCanvas - The canvas to export (2D textCanvas or 3D paperCanvas)
  */
-const exportAsImage = () => {
+const exportAsImage = (sourceCanvas: HTMLCanvasElement) => {
   // Target 2K resolution (2560x1440)
   const targetWidth = 2560;
   const targetHeight = 1440;
 
-  // Calculate scale factor from current canvas
-  const scaleX = targetWidth / textCanvas.width;
-  const scaleY = targetHeight / textCanvas.height;
+  // Calculate scale factor from source canvas
+  const scaleX = targetWidth / sourceCanvas.width;
+  const scaleY = targetHeight / sourceCanvas.height;
   const scale = Math.max(scaleX, scaleY);
 
   // Create a new canvas for the export at 2K resolution
@@ -38,11 +39,16 @@ const exportAsImage = () => {
   }
   ctx.putImageData(imageData, 0, 0);
 
-  // Scale and draw the text canvas to fit 2K resolution
+  // Center the source canvas on the export canvas
+  const scaledWidth = sourceCanvas.width * scale;
+  const scaledHeight = sourceCanvas.height * scale;
+  const offsetX = (targetWidth - scaledWidth) / 2;
+  const offsetY = (targetHeight - scaledHeight) / 2;
+
+  // Scale and draw the source canvas centered
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.scale(scale, scale);
-  ctx.drawImage(textCanvas, 0, 0);
+  ctx.drawImage(sourceCanvas, offsetX, offsetY, scaledWidth, scaledHeight);
 
   // Export as PNG and trigger download
   const link = document.createElement('a');
@@ -226,7 +232,10 @@ const getAppMenu = (app: import('./App').default) => {
   menu.addMenuItem('📷 &nbsp; Export as Image', {
     callback: () => {
       menu.closeMenu();
-      exportAsImage();
+      // Use 3D paper canvas if in 3D mode, otherwise use 2D text canvas
+      const sourceCanvas =
+        app.is3DMode && app.scene3D ? app.scene3D.getPaperCanvas() : textCanvas;
+      exportAsImage(sourceCanvas);
       menuEvent('menu:export-image');
     },
   });

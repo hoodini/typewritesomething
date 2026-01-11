@@ -98,6 +98,12 @@ class App {
       this.scene3D = new TypewriterScene3D('container-3d');
     }
 
+    // Setup right-click menu for 3D mode
+    this.scene3D.onContextMenu((e) => {
+      const position = new Vector(e.clientX, e.clientY);
+      this.menu?.openMenu(position);
+    });
+
     // Setup 3D keyboard events
     this.setup3DKeyboardEvents();
 

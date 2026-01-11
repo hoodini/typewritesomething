@@ -556,6 +556,8 @@ export class TypewriterScene3D {
     );
   }
 
+  private contextMenuCallback: ((e: MouseEvent) => void) | null = null;
+
   private setupEventListeners(): void {
     // Handle window resize
     window.addEventListener('resize', () => {
@@ -567,10 +569,21 @@ export class TypewriterScene3D {
       this.renderer.setSize(width, height);
     });
 
-    // Prevent context menu on long press (mobile)
+    // Handle context menu (right-click)
     this.renderer.domElement.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
+      if (this.contextMenuCallback) {
+        e.preventDefault();
+        this.contextMenuCallback(e);
+      }
+      // Allow default context menu if no callback set
     });
+  }
+
+  /**
+   * Set a callback for right-click context menu
+   */
+  public onContextMenu(callback: (e: MouseEvent) => void): void {
+    this.contextMenuCallback = callback;
   }
 
   /**
