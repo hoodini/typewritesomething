@@ -1,0 +1,35 @@
+{
+  "name": "Typewrite Something",
+  "short_name": "Typewrite Something",
+  "display": "standalone",
+  "background_color": "#f6f3e3",
+  "theme_color": "#150904",
+  "start_url": "/",
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/static/img/logo-on-bg-36.png",
+      "type": "image/png",
+      "sizes": "36x36"
+    },
+    {
+      "src": "/static/img/logo-on-bg-96.png",
+      "type": "image/png",
+      "sizes": "96x96",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/img/logo-on-bg-180.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/img/logo-on-bg-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

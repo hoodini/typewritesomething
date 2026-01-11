@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Typewrite Something</title>
+    <meta
+      name="description"
+      content="A minimalist typewriter simulator to inspire creative writing"
+    />
+    <meta
+      name="keywords"
+      content="typewriter, online, simulator, writing, poetry, jane, porter, bozdoz, creative"
+    />
+    <meta name="author" content="@bozdoz" />
+
+    <meta name="theme-color" content="#150904" />
+
+    <!-- Schema.org markup for Google- -->
+    <meta itemprop="name" content="Typewrite Something" />
+    <meta
+      itemprop="description"
+      content="A minimalist typewriter simulator to inspire creative writing"
+    />
+    <meta
+      itemprop="image"
+      content="https://typewritesomething.com/static/img/logo-on-bg.png"
+    />
+
+    <!-- Twitter Card data -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@bozdoz" />
+    <meta name="twitter:title" content="Typewrite Something" />
+    <meta
+      name="twitter:description"
+      content="A minimalist typewriter simulator to inspire creative writing"
+    />
+    <meta name="twitter:creator" content="@bozdoz" />
+    <meta
+      name="twitter:image:src"
+      content="https://typewritesomething.com/static/img/logo-on-bg.png"
+    />
+    <meta name="twitter:image:alt" content="Typewrite Something" />
+
+    <!-- Open Graph data -->
+    <meta property="og:title" content="Typewrite Something" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://typewritesomething.com/" />
+    <meta
+      property="og:image"
+      content="https://typewritesomething.com/static/img/logo-on-bg.png"
+    />
+    <meta
+      property="og:description"
+      content="A minimalist typewriter simulator to inspire creative writing"
+    />
+    <meta property="og:site_name" content="Typewrite Something" />
+
+    <link rel="apple-touch-icon" href="./static/img/logo-on-bg-180.png" />
+
+    <meta
+      name="viewport"
+      content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"
+    />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <link rel="manifest" href="./manifest.json" />
+
+    <link rel="icon" href="./favicon.ico" />
+    <link
+      rel="preload"
+      href="./static/fonts/specialelite-webfont.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="./static/style.css" />
+    <script async defer src="./dist/main.js"></script>
+  </head>
+
+  <body>
+    <main class="main" id="main">
+      <noscript>You need to enable JavaScript to run this app.</noscript>
+
+      <!-- Mode toggle button -->
+      <button id="mode-toggle" class="mode-toggle" title="Switch between 2D and 3D mode">
+        <span class="mode-icon">3D</span>
+      </button>
+
+      <!-- 2D Canvas View (default) -->
+      <div id="container" class="view-container active">
+        <canvas id="text-canvas"></canvas>
+
+        <canvas id="cursor-canvas"></canvas>
+
+        <!-- prevent autocomplete -->
+        <div id="lp"><input type="text" /><input type="password" /></div>
+        <script type="text/javascript">
+          setTimeout(function () {
+            document.getElementById('lp').style.display = 'none';
+          }, 75);
+        </script>
+
+        <input
+          type="text"
+          id="text-input"
+          tabindex="0"
+          autocomplete="one-time-code"
+          autocorrect="off"
+          data-lpignore="true"
+        />
+      </div>
+
+      <!-- 3D Typewriter View -->
+      <div id="container-3d" class="view-container"></div>
+
+      <aside id="splash" tabindex="0">
+        <h1>Typewrite Something</h1>
+        <h2>Press any key to start...</h2>
+      </aside>
+    </main>
+
+    <audio
+      preload="auto"
+      id="keypress"
+      src="./static/audio/keypress.mp3"
+    ></audio>
+    <audio preload="auto" id="return" src="./static/audio/return.mp3"></audio>
+  </body>
+</html>
