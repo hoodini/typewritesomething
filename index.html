@@ -81,7 +81,14 @@
   <body>
     <main class="main" id="main">
       <noscript>You need to enable JavaScript to run this app.</noscript>
-      <div id="container">
+
+      <!-- Mode toggle button -->
+      <button id="mode-toggle" class="mode-toggle" title="Switch between 2D and 3D mode">
+        <span class="mode-icon">3D</span>
+      </button>
+
+      <!-- 2D Canvas View (default) -->
+      <div id="container" class="view-container active">
         <canvas id="text-canvas"></canvas>
 
         <canvas id="cursor-canvas"></canvas>
@@ -103,6 +110,10 @@
           data-lpignore="true"
         />
       </div>
+
+      <!-- 3D Typewriter View -->
+      <div id="container-3d" class="view-container"></div>
+
       <aside id="splash" tabindex="0">
         <h1>Typewrite Something</h1>
         <h2>Press any key to start...</h2>

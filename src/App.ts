@@ -8,6 +8,7 @@ import Vector from './utils/Vector';
 import Menu from './Menu';
 import addLongTouch from './utils/addLongTouch';
 import getAppMenu from './getAppMenu';
+import { TypewriterScene3D } from './TypewriterScene3D';
 
 const isIos = /iPad|iPhone|iPod/.test(navigator.platform);
 
@@ -30,6 +31,17 @@ class App {
 
   removeLongTouch = () => {};
 
+  // 3D Mode properties
+  is3DMode = false;
+
+  scene3D: TypewriterScene3D | null = null;
+
+  modeToggleBtn: HTMLButtonElement | null = null;
+
+  container2D: HTMLElement | null = null;
+
+  container3D: HTMLElement | null = null;
+
   reset() {
     this.running = true;
     this.typewriter.reset();
@@ -44,6 +56,105 @@ class App {
     this.reset();
 
     this.menu = getAppMenu(this);
+
+    // Setup 3D mode toggle
+    this.setupModeToggle();
+  }
+
+  setupModeToggle() {
+    this.modeToggleBtn = document.getElementById(
+      'mode-toggle'
+    ) as HTMLButtonElement;
+    this.container2D = document.getElementById('container');
+    this.container3D = document.getElementById('container-3d');
+
+    if (this.modeToggleBtn) {
+      this.modeToggleBtn.addEventListener('click', () => this.toggleMode());
+    }
+  }
+
+  toggleMode() {
+    this.is3DMode = !this.is3DMode;
+
+    if (this.is3DMode) {
+      this.enter3DMode();
+    } else {
+      this.exit3DMode();
+    }
+  }
+
+  enter3DMode() {
+    // Update UI
+    this.modeToggleBtn?.classList.add('active-3d');
+    const modeIcon = this.modeToggleBtn?.querySelector('.mode-icon');
+    if (modeIcon) modeIcon.textContent = '2D';
+
+    // Switch containers
+    this.container2D?.classList.remove('active');
+    this.container3D?.classList.add('active');
+
+    // Initialize 3D scene if not exists
+    if (!this.scene3D) {
+      this.scene3D = new TypewriterScene3D('container-3d');
+    }
+
+    // Setup 3D keyboard events
+    this.setup3DKeyboardEvents();
+
+    // Keep text input focused for keyboard capture
+    textInput.focus();
+  }
+
+  exit3DMode() {
+    // Update UI
+    this.modeToggleBtn?.classList.remove('active-3d');
+    const modeIcon = this.modeToggleBtn?.querySelector('.mode-icon');
+    if (modeIcon) modeIcon.textContent = '3D';
+
+    // Switch containers
+    this.container3D?.classList.remove('active');
+    this.container2D?.classList.add('active');
+
+    // Remove 3D keyboard events (2D events are already active)
+    this.remove3DKeyboardEvents();
+
+    // Refocus text input
+    this.focusText();
+  }
+
+  private handle3DKeyDown = (e: KeyboardEvent) => {
+    if (!this.is3DMode || !this.scene3D) return;
+
+    const isMeta = e.altKey || e.ctrlKey || e.metaKey;
+    if (isMeta) return;
+
+    const { key } = e;
+
+    if (key === 'Enter') {
+      this.scene3D.newline();
+      newlineAudio.play();
+    } else if (key === 'Backspace') {
+      this.scene3D.backspace();
+      keypressAudio.play();
+    } else if (key === 'Tab') {
+      // Add tab spaces
+      for (let i = 0; i < 4; i += 1) {
+        this.scene3D.typeCharacter(' ');
+      }
+      keypressAudio.play();
+      e.preventDefault();
+    } else if (key.length === 1) {
+      // Single character
+      this.scene3D.typeCharacter(key);
+    }
+  };
+
+  setup3DKeyboardEvents() {
+    document.addEventListener('keydown', this.handle3DKeyDown);
+  }
+
+  remove3DKeyboardEvents() {
+    document.removeEventListener('keydown', this.handle3DKeyDown);
   }
 
   stop() {
@@ -53,6 +164,13 @@ class App {
     // kill events
     this.events('off');
     this.removeMoveEvent();
+
+    // Clean up 3D
+    if (this.scene3D) {
+      this.scene3D.dispose();
+      this.scene3D = null;
+    }
+    this.remove3DKeyboardEvents();
 
     this.menu?.destroy();
 
