@@ -176,15 +176,20 @@ class App {
     }
 
     const { typewriter } = this;
-    const nav = typewriter.cursor.navButtons[key];
     // TODO: add test for first character being set
     // ignores first character, which should always be a single character
     const letters = textInput.value.substr(1);
 
-    if (nav) {
-      nav();
-    } else if (letters) {
-      typewriter.addCharacter(letters);
+    // Handle Enter specially for RTL support
+    if (key === 'Enter') {
+      typewriter.handleNewline();
+    } else {
+      const nav = typewriter.cursor.navButtons[key];
+      if (nav) {
+        nav();
+      } else if (letters) {
+        typewriter.addCharacter(letters);
+      }
     }
 
     this.emptyText();

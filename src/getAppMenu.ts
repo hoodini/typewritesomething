@@ -2,6 +2,71 @@ import Menu from './Menu';
 import * as Storage from './Storage';
 import Dialog from './Dialog';
 import SavedList from './SavedList';
+import { textCanvas } from './helpers/getElements';
+
+/**
+ * Exports the typewriter canvas as a vintage paper image
+ */
+const exportAsVintageImage = () => {
+  const { width, height } = textCanvas;
+
+  // Create a new canvas for the export
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = width;
+  exportCanvas.height = height;
+  const ctx = exportCanvas.getContext('2d')!;
+
+  // Draw vintage paper background
+  // Base color - aged paper
+  ctx.fillStyle = '#f4e4c9';
+  ctx.fillRect(0, 0, width, height);
+
+  // Add subtle texture/noise for aged paper effect
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const { data } = imageData;
+  for (let i = 0; i < data.length; i += 4) {
+    const noise = (Math.random() - 0.5) * 20;
+    data[i] = Math.min(255, Math.max(0, data[i] + noise)); // R
+    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise - 5)); // G
+    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise - 10)); // B
+  }
+  ctx.putImageData(imageData, 0, 0);
+
+  // Add slight vignette effect (darker edges)
+  const gradient = ctx.createRadialGradient(
+    width / 2,
+    height / 2,
+    0,
+    width / 2,
+    height / 2,
+    Math.max(width, height) / 1.5
+  );
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0.15)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  // Add some coffee stain / age spots (subtle)
+  for (let i = 0; i < 3; i += 1) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const radius = 20 + Math.random() * 40;
+    const spotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    spotGradient.addColorStop(0, 'rgba(139, 90, 43, 0.08)');
+    spotGradient.addColorStop(1, 'rgba(139, 90, 43, 0)');
+    ctx.fillStyle = spotGradient;
+    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+  }
+
+  // Draw the text canvas on top
+  ctx.drawImage(textCanvas, 0, 0);
+
+  // Export as PNG and trigger download
+  const link = document.createElement('a');
+  link.download = `typewriter-${Date.now()}.png`;
+  link.href = exportCanvas.toDataURL('image/png');
+  link.click();
+};
 
 const menuEvent = (event: string) => {
   window.gtag('event', event, {
@@ -163,16 +228,23 @@ const getAppMenu = (app: import('./App').default) => {
         .onSubmit<{ content: string }>(({ content }) => {
           const lines = content.split(/[\r\n]/);
           const { typewriter } = app;
-          const { cursor } = typewriter;
 
           typewriter.reset();
 
           for (const line of lines) {
             typewriter.addCharacter(line);
-            cursor.newline();
+            typewriter.handleNewline();
           }
         })
         .open();
+    },
+  });
+
+  menu.addMenuItem('📷 &nbsp; Export as Image', {
+    callback: () => {
+      menu.closeMenu();
+      exportAsVintageImage();
+      menuEvent('menu:export-image');
     },
   });
 

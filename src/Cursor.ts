@@ -25,6 +25,9 @@ textInput.style.height = `${cursorHeight}px`;
 // top-left
 const initialPosVec = paddingVec;
 
+// Export for RTL newline calculation
+export const getRightMargin = () => window.innerWidth - paddingVec.x;
+
 export class Cursor {
   _cursorTimeout?: number;
 
@@ -117,6 +120,13 @@ export class Cursor {
 
   newline = () => {
     this.update(new Vector(paddingVec.x, this.position.y + lineHeight));
+  };
+
+  /** RTL newline - goes to right margin instead of left */
+  newlineRTL = () => {
+    this.update(
+      new Vector(window.innerWidth - paddingVec.x, this.position.y + lineHeight)
+    );
   };
 
   fadeOut = () => {

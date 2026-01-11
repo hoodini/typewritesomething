@@ -27,7 +27,9 @@ interface TypeWriterClass {
   canvasOffset: Vector;
   containerScale: number;
   chars: Character[];
+  isRTLMode: boolean;
   addCharacter(_chars: string): void;
+  handleNewline(): void;
   redraw(): void;
   resetCanvases(): void;
   reposition(vec?: Vector | UIEvent): void;
@@ -48,6 +50,9 @@ export class TypeWriter implements TypeWriterClass {
   chars: Character[] = [];
 
   cursor = new Cursor();
+
+  /** Tracks if we're currently in RTL mode (for newline behavior) */
+  isRTLMode = false;
 
   constructor() {
     if (TypeWriter._instance) {
@@ -72,21 +77,31 @@ export class TypeWriter implements TypeWriterClass {
       const char = _chars[i];
       const isRTL = isHebrewChar(char);
 
-      // For RTL characters, move cursor left first, then place character
-      if (isRTL) {
-        this.cursor.moveleft();
-      }
+      // Update RTL mode based on character type
+      this.isRTLMode = isRTL;
 
       const {
         position: { x, y },
       } = this.cursor;
 
+      // Place character at current cursor position
       this.chars.push(new Character(this, char, x, y));
 
-      // For LTR characters, move cursor right after placing
-      if (!isRTL) {
+      // Move cursor: left for RTL, right for LTR
+      if (isRTL) {
+        this.cursor.moveleft();
+      } else {
         this.cursor.moveright();
       }
+    }
+  };
+
+  /** Handle newline - respects current RTL mode */
+  handleNewline = (): void => {
+    if (this.isRTLMode) {
+      this.cursor.newlineRTL();
+    } else {
+      this.cursor.newline();
     }
   };
 
