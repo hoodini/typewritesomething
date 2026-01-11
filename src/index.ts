@@ -8,28 +8,41 @@ import isDebugMode from './helpers/isDebugMode';
 import './tracking/analytics';
 
 const splash = document.getElementById('splash')!;
+let appStarted = false;
 
-const startApp = (e: KeyboardEvent | MouseEvent | TouchEvent): void => {
-  if ('altKey' in e && (e.altKey || e.ctrlKey || e.metaKey)) {
-    // user might be trying to do something else
-    return;
+const startApp = (e?: Event): void => {
+  // Prevent starting twice
+  if (appStarted) return;
+
+  // Check for meta keys on keyboard events
+  if (e && 'altKey' in e) {
+    const keyEvent = e as KeyboardEvent;
+    if (keyEvent.altKey || keyEvent.ctrlKey || keyEvent.metaKey) {
+      return;
+    }
   }
 
+  appStarted = true;
   splash.classList.add('hide');
 
   // Remove all event listeners
   splash.removeEventListener('click', startApp);
+  splash.removeEventListener('touchstart', startApp);
   splash.removeEventListener('touchend', startApp);
+  splash.removeEventListener('keydown', startApp);
   splash.removeEventListener('keyup', startApp);
   document.removeEventListener('keydown', startApp);
+  document.removeEventListener('click', startApp);
 
-  const app = new App();
-
-  app.start();
-
-  // should be able to focus on ios so long as this
-  // is called from within a click handler
-  app.focusText();
+  try {
+    const app = new App();
+    app.start();
+    app.focusText();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to start app:', error);
+    appStarted = false;
+  }
 };
 
 const onload = (): void => {
@@ -37,14 +50,20 @@ const onload = (): void => {
     window.location.hash = '';
   }
 
+  // Make splash focusable and focus it
+  splash.setAttribute('tabindex', '0');
   splash.focus();
 
-  // Multiple event listeners for better cross-browser/device support
+  // Multiple event listeners for comprehensive support
   splash.addEventListener('click', startApp);
+  splash.addEventListener('touchstart', startApp);
   splash.addEventListener('touchend', startApp);
+  splash.addEventListener('keydown', startApp);
   splash.addEventListener('keyup', startApp);
-  // Also listen on document for keyboard events in case splash doesn't have focus
+
+  // Document-level listeners as fallback
   document.addEventListener('keydown', startApp);
+  document.addEventListener('click', startApp);
 
   window.removeEventListener('load', onload);
 };
