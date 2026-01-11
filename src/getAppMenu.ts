@@ -233,12 +233,8 @@ const getAppMenu = (app: import('./App').default) => {
 
   menu.addDivider();
 
-  menu.addMenuItem('🙋‍♀️ &nbsp; App Feedback', {
-    href: 'https://github.com/bozdoz/typewritesomething/issues/new',
-  });
-
-  menu.addMenuItem('🥰 &nbsp; Sponsor Me', {
-    href: 'https://www.paypal.com/paypalme/bozdoz',
+  menu.addMenuItem('🌐 &nbsp; Made by Yuv', {
+    href: 'https://yuv.ai',
   });
 
   return menu;
