@@ -177,9 +177,9 @@ export class TypewriterScene3D {
     if (!el) throw new Error(`Container ${containerId} not found`);
     this.container = el;
 
-    // Scene setup - clean bright studio look matching design system
+    // Scene setup - cozy writer's cabin atmosphere
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x2a2a2a); // Neutral dark gray, not black
+    // Don't set background color - we'll create a beautiful sky
 
     // Camera - cinematic 3/4 view
     const preset = this.cameraPresets.default;
@@ -206,7 +206,7 @@ export class TypewriterScene3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.85; // Slightly reduced to prevent paper overexposure
+    this.renderer.toneMappingExposure = 0.95; // Balanced for warm cabin atmosphere
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.container.appendChild(this.renderer.domElement);
 
@@ -255,15 +255,15 @@ export class TypewriterScene3D {
     const renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(renderPass);
 
-    // Minimal bloom - only for metallic highlights, exclude paper
+    // Enhanced bloom for sun glow and god rays
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(
         this.container.clientWidth,
         this.container.clientHeight
       ),
-      0.08, // strength - minimal
-      0.2, // radius
-      0.98 // threshold - only very bright specular highlights
+      0.4, // strength - moderate for sun glow
+      0.6, // radius - wider spread
+      0.85 // threshold - catch sun and highlights but not paper
     );
     this.composer.addPass(bloomPass);
 
@@ -328,9 +328,40 @@ export class TypewriterScene3D {
     const frontFill = new THREE.DirectionalLight(0xffffff, 0.3);
     frontFill.position.set(0, 5, 15);
     this.scene.add(frontFill);
+
+    // Warm sunlight from window direction (god ray source)
+    const sunLight = new THREE.DirectionalLight(0xffd700, 0.6);
+    sunLight.position.set(-10, 15, -5);
+    sunLight.castShadow = false;
+    this.scene.add(sunLight);
+
+    // Golden ambient from window
+    const windowAmbient = new THREE.PointLight(0xffeaa7, 0.4, 20);
+    windowAmbient.position.set(-8, 8, -10);
+    this.scene.add(windowAmbient);
   }
 
   private createEnvironment(): void {
+    // ========================================
+    // BEAUTIFUL SKY WITH MOUNTAINS
+    // ========================================
+    this.createSkyAndMountains();
+
+    // ========================================
+    // COZY CABIN INTERIOR
+    // ========================================
+    this.createCabinInterior();
+
+    // ========================================
+    // GOD RAYS / VOLUMETRIC LIGHT
+    // ========================================
+    this.createGodRays();
+
+    // ========================================
+    // FLOATING DUST PARTICLES
+    // ========================================
+    this.createDustParticles();
+
     // Dark wooden desk with warm wood grain
     const deskGeometry = new THREE.PlaneGeometry(40, 40);
     const deskMaterial = new THREE.MeshStandardMaterial({
@@ -354,6 +385,385 @@ export class TypewriterScene3D {
     const deskEdge = new THREE.Mesh(deskEdgeGeometry, deskEdgeMaterial);
     deskEdge.position.set(0, -0.45, 2);
     this.scene.add(deskEdge);
+  }
+
+  private createSkyAndMountains(): void {
+    // Create gradient sky sphere
+    const skyGeometry = new THREE.SphereGeometry(50, 32, 32);
+    const skyCanvas = document.createElement('canvas');
+    skyCanvas.width = 512;
+    skyCanvas.height = 512;
+    const skyCtx = skyCanvas.getContext('2d')!;
+
+    // Beautiful sunrise/golden hour gradient
+    const gradient = skyCtx.createLinearGradient(0, 0, 0, 512);
+    gradient.addColorStop(0, '#1a1a2e'); // Deep blue at top
+    gradient.addColorStop(0.3, '#4a4e69'); // Twilight purple
+    gradient.addColorStop(0.5, '#9a8c98'); // Soft mauve
+    gradient.addColorStop(0.7, '#c9ada7'); // Warm rose
+    gradient.addColorStop(0.85, '#f2e9e4'); // Pale cream horizon
+    gradient.addColorStop(1, '#dda15e'); // Golden orange at bottom
+    skyCtx.fillStyle = gradient;
+    skyCtx.fillRect(0, 0, 512, 512);
+
+    // Add some subtle clouds
+    skyCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    for (let i = 0; i < 20; i += 1) {
+      const x = Math.random() * 512;
+      const y = 150 + Math.random() * 150;
+      const w = 30 + Math.random() * 80;
+      const h = 10 + Math.random() * 30;
+      skyCtx.beginPath();
+      skyCtx.ellipse(x, y, w, h, 0, 0, Math.PI * 2);
+      skyCtx.fill();
+    }
+
+    const skyTexture = new THREE.CanvasTexture(skyCanvas);
+    const skyMaterial = new THREE.MeshBasicMaterial({
+      map: skyTexture,
+      side: THREE.BackSide,
+    });
+    const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+    this.scene.add(sky);
+
+    // Create distant mountains silhouette
+    const mountainShape = new THREE.Shape();
+    mountainShape.moveTo(-30, 0);
+
+    // Mountain peaks
+    const peaks = [
+      { x: -25, y: 8 },
+      { x: -18, y: 12 },
+      { x: -10, y: 9 },
+      { x: -5, y: 15 }, // Tallest peak (like Matterhorn)
+      { x: 0, y: 11 },
+      { x: 8, y: 14 },
+      { x: 15, y: 10 },
+      { x: 22, y: 13 },
+      { x: 30, y: 7 },
+    ];
+
+    peaks.forEach((peak, i) => {
+      if (i === 0) {
+        mountainShape.lineTo(peak.x, peak.y);
+      } else {
+        // Jagged mountain profile
+        const midX = (peaks[i - 1].x + peak.x) / 2;
+        const midY = Math.min(peaks[i - 1].y, peak.y) * 0.7;
+        mountainShape.quadraticCurveTo(midX, midY, peak.x, peak.y);
+      }
+    });
+    mountainShape.lineTo(30, 0);
+    mountainShape.lineTo(-30, 0);
+
+    const mountainGeometry = new THREE.ShapeGeometry(mountainShape);
+    const mountainMaterial = new THREE.MeshBasicMaterial({
+      color: 0x2d3436, // Dark silhouette
+      side: THREE.DoubleSide,
+    });
+    const mountains = new THREE.Mesh(mountainGeometry, mountainMaterial);
+    mountains.position.set(0, -5, -40);
+    mountains.scale.set(1.5, 1.2, 1);
+    this.scene.add(mountains);
+
+    // Snow caps on mountains (lighter peaks)
+    const snowMaterial = new THREE.MeshBasicMaterial({
+      color: 0xf8f9fa,
+      transparent: true,
+      opacity: 0.6,
+    });
+
+    // Add snow to tallest peaks
+    const snowPeaks = [
+      { x: -5, y: 15, size: 2 },
+      { x: 8, y: 14, size: 1.5 },
+      { x: 22, y: 13, size: 1.2 },
+    ];
+
+    snowPeaks.forEach((peak) => {
+      const snowGeometry = new THREE.ConeGeometry(
+        peak.size,
+        peak.size * 1.5,
+        4
+      );
+      const snow = new THREE.Mesh(snowGeometry, snowMaterial);
+      snow.position.set(peak.x * 1.5, peak.y * 1.2 - 3.5, -40);
+      snow.rotation.y = Math.PI / 4;
+      this.scene.add(snow);
+    });
+  }
+
+  private createCabinInterior(): void {
+    // Wooden wall behind the scene
+    const wallGeometry = new THREE.PlaneGeometry(30, 20);
+    const wallMaterial = new THREE.MeshStandardMaterial({
+      color: 0x5c4033, // Warm wood brown
+      roughness: 0.9,
+      metalness: 0.0,
+    });
+    const backWall = new THREE.Mesh(wallGeometry, wallMaterial);
+    backWall.position.set(0, 5, -15);
+    backWall.receiveShadow = true;
+    this.scene.add(backWall);
+
+    // Window frame - rustic wooden frame
+    const windowGroup = new THREE.Group();
+
+    // Window opening (cutout effect using darker area)
+    const windowOpeningGeometry = new THREE.PlaneGeometry(8, 6);
+    const windowOpeningMaterial = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+    });
+    const windowOpening = new THREE.Mesh(
+      windowOpeningGeometry,
+      windowOpeningMaterial
+    );
+    windowOpening.position.z = 0.1;
+    windowGroup.add(windowOpening);
+
+    // Wooden window frame
+    const frameMaterial = new THREE.MeshStandardMaterial({
+      color: 0x3e2723, // Dark wood
+      roughness: 0.8,
+      metalness: 0.1,
+    });
+
+    // Frame pieces
+    const frameThickness = 0.4;
+    const frameDepth = 0.3;
+
+    // Top frame
+    const topFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(9, frameThickness, frameDepth),
+      frameMaterial
+    );
+    topFrame.position.y = 3.2;
+    windowGroup.add(topFrame);
+
+    // Bottom frame
+    const bottomFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(9, frameThickness, frameDepth),
+      frameMaterial
+    );
+    bottomFrame.position.y = -3.2;
+    windowGroup.add(bottomFrame);
+
+    // Left frame
+    const leftFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(frameThickness, 6.8, frameDepth),
+      frameMaterial
+    );
+    leftFrame.position.x = -4.3;
+    windowGroup.add(leftFrame);
+
+    // Right frame
+    const rightFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(frameThickness, 6.8, frameDepth),
+      frameMaterial
+    );
+    rightFrame.position.x = 4.3;
+    windowGroup.add(rightFrame);
+
+    // Cross bars
+    const verticalBar = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 6.4, 0.15),
+      frameMaterial
+    );
+    windowGroup.add(verticalBar);
+
+    const horizontalBar = new THREE.Mesh(
+      new THREE.BoxGeometry(8.6, 0.2, 0.15),
+      frameMaterial
+    );
+    windowGroup.add(horizontalBar);
+
+    windowGroup.position.set(-8, 8, -14.5);
+    windowGroup.rotation.y = 0.3; // Slight angle
+    this.scene.add(windowGroup);
+
+    // Window sill with items
+    const sillGeometry = new THREE.BoxGeometry(10, 0.3, 1.5);
+    const sillMaterial = new THREE.MeshStandardMaterial({
+      color: 0x4a3728,
+      roughness: 0.7,
+    });
+    const windowSill = new THREE.Mesh(sillGeometry, sillMaterial);
+    windowSill.position.set(-8, 4.7, -14);
+    windowSill.rotation.y = 0.3;
+    this.scene.add(windowSill);
+
+    // Coffee mug on the side (cozy detail)
+    const mugGroup = new THREE.Group();
+    const mugGeometry = new THREE.CylinderGeometry(0.3, 0.25, 0.6, 16);
+    const mugMaterial = new THREE.MeshStandardMaterial({
+      color: 0xf5f5dc, // Cream ceramic
+      roughness: 0.4,
+    });
+    const mug = new THREE.Mesh(mugGeometry, mugMaterial);
+    mugGroup.add(mug);
+
+    // Mug handle
+    const handleGeometry = new THREE.TorusGeometry(0.15, 0.04, 8, 16, Math.PI);
+    const handle = new THREE.Mesh(handleGeometry, mugMaterial);
+    handle.position.set(0.35, 0, 0);
+    handle.rotation.y = Math.PI / 2;
+    mugGroup.add(handle);
+
+    // Steam from coffee
+    const steamGeometry = new THREE.PlaneGeometry(0.3, 0.5);
+    const steamMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.2,
+      side: THREE.DoubleSide,
+    });
+    const steam = new THREE.Mesh(steamGeometry, steamMaterial);
+    steam.position.y = 0.5;
+    mugGroup.add(steam);
+
+    mugGroup.position.set(5, 0.1, 4);
+    this.scene.add(mugGroup);
+  }
+
+  private createGodRays(): void {
+    // Volumetric light cone coming through window
+    const coneGeometry = new THREE.ConeGeometry(6, 15, 32, 1, true);
+    const coneMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        void main() {
+          vUv = uv;
+          vPosition = position;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform float time;
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        void main() {
+          float intensity = 1.0 - vUv.y;
+          intensity = pow(intensity, 2.0);
+
+          // Add some noise/variation
+          float noise = sin(vPosition.x * 10.0 + time) * 0.1 +
+                       sin(vPosition.z * 8.0 + time * 0.7) * 0.1;
+          intensity += noise * 0.3;
+
+          // Golden sunlight color
+          vec3 sunColor = vec3(1.0, 0.9, 0.7);
+
+          gl_FragColor = vec4(sunColor, intensity * 0.15);
+        }
+      `,
+      transparent: true,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+
+    const godRayCone = new THREE.Mesh(coneGeometry, coneMaterial);
+    godRayCone.position.set(-6, 8, -8);
+    godRayCone.rotation.x = Math.PI;
+    godRayCone.rotation.z = 0.4;
+    this.scene.add(godRayCone);
+
+    // Store reference for animation
+    (this as any).godRayMaterial = coneMaterial;
+
+    // Add sun disc visible through window
+    const sunGeometry = new THREE.CircleGeometry(2, 32);
+    const sunMaterial = new THREE.MeshBasicMaterial({
+      color: 0xfff4e0,
+      transparent: true,
+      opacity: 0.8,
+    });
+    const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+    sun.position.set(-10, 12, -30);
+    this.scene.add(sun);
+
+    // Sun glow
+    const glowGeometry = new THREE.CircleGeometry(4, 32);
+    const glowMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffeaa7,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const sunGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+    sunGlow.position.set(-10, 12, -31);
+    this.scene.add(sunGlow);
+  }
+
+  private createDustParticles(): void {
+    const particleCount = 200;
+    const positions = new Float32Array(particleCount * 3);
+    const sizes = new Float32Array(particleCount);
+
+    for (let i = 0; i < particleCount; i += 1) {
+      // Concentrate particles in the god ray area
+      positions[i * 3] = (Math.random() - 0.5) * 15 - 3;
+      positions[i * 3 + 1] = Math.random() * 12;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 15;
+      sizes[i] = Math.random() * 0.08 + 0.02;
+    }
+
+    const particleGeometry = new THREE.BufferGeometry();
+    particleGeometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(positions, 3)
+    );
+    particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+    const particleMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        time: { value: 0 },
+        color: { value: new THREE.Color(0xffeaa7) },
+      },
+      vertexShader: `
+        attribute float size;
+        uniform float time;
+        varying float vAlpha;
+        void main() {
+          vec3 pos = position;
+
+          // Gentle floating motion
+          pos.y += sin(time * 0.5 + position.x * 2.0) * 0.3;
+          pos.x += sin(time * 0.3 + position.z * 1.5) * 0.2;
+
+          vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+          gl_PointSize = size * (300.0 / -mvPosition.z);
+          gl_Position = projectionMatrix * mvPosition;
+
+          // Fade based on height
+          vAlpha = 0.3 + 0.4 * (1.0 - pos.y / 12.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 color;
+        varying float vAlpha;
+        void main() {
+          float dist = length(gl_PointCoord - vec2(0.5));
+          if (dist > 0.5) discard;
+          float alpha = (1.0 - dist * 2.0) * vAlpha;
+          gl_FragColor = vec4(color, alpha);
+        }
+      `,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    this.scene.add(particles);
+
+    // Store reference for animation
+    (this as any).dustParticles = particles;
+    (this as any).dustMaterial = particleMaterial;
   }
 
   private createTypewriter(): void {
@@ -1102,6 +1512,20 @@ export class TypewriterScene3D {
 
   private animate = (): void => {
     this.animationId = requestAnimationFrame(this.animate);
+
+    const time = performance.now() * 0.001;
+
+    // Animate god rays
+    const godRayMaterial = (this as any).godRayMaterial as THREE.ShaderMaterial;
+    if (godRayMaterial) {
+      godRayMaterial.uniforms.time.value = time;
+    }
+
+    // Animate dust particles
+    const dustMaterial = (this as any).dustMaterial as THREE.ShaderMaterial;
+    if (dustMaterial) {
+      dustMaterial.uniforms.time.value = time;
+    }
 
     // Animate type bars
     this.typeBars.forEach((typeBar) => {
