@@ -206,7 +206,7 @@ export class TypewriterScene3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.0; // Balanced exposure
+    this.renderer.toneMappingExposure = 0.85; // Slightly reduced to prevent paper overexposure
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.container.appendChild(this.renderer.domElement);
 
@@ -255,15 +255,15 @@ export class TypewriterScene3D {
     const renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(renderPass);
 
-    // Very subtle bloom for brass highlights only
+    // Minimal bloom - only for metallic highlights, exclude paper
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(
         this.container.clientWidth,
         this.container.clientHeight
       ),
-      0.15, // strength - very subtle
-      0.3, // radius
-      0.9 // threshold - only bright highlights
+      0.08, // strength - minimal
+      0.2, // radius
+      0.98 // threshold - only very bright specular highlights
     );
     this.composer.addPass(bloomPass);
 
@@ -281,12 +281,12 @@ export class TypewriterScene3D {
   }
 
   private setupLights(): void {
-    // Strong ambient light for overall brightness
-    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+    // Moderate ambient light
+    const ambient = new THREE.AmbientLight(0xffffff, 0.4);
     this.scene.add(ambient);
 
-    // Hemisphere light - bright studio lighting
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+    // Hemisphere light - moderate studio lighting
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.5);
     this.scene.add(hemiLight);
 
     // Main key light - balanced white with slight warmth
@@ -304,28 +304,28 @@ export class TypewriterScene3D {
     keyLight.shadow.camera.bottom = -10;
     this.scene.add(keyLight);
 
-    // Paper spotlight - gentle illumination on typing area
-    const paperLight = new THREE.SpotLight(0xffffff, 0.8);
+    // Subtle paper illumination - very gentle to prevent overexposure
+    const paperLight = new THREE.SpotLight(0xffffff, 0.3);
     paperLight.position.set(0, 10, 2);
     paperLight.target.position.set(0, 5.5, -1.2);
-    paperLight.angle = Math.PI / 6;
-    paperLight.penumbra = 0.5;
+    paperLight.angle = Math.PI / 8;
+    paperLight.penumbra = 0.7;
     paperLight.castShadow = false;
     this.scene.add(paperLight);
     this.scene.add(paperLight.target);
 
-    // Fill light from the right - neutral
-    const fillLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    // Fill light from the right - moderate
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
     fillLight.position.set(5, 6, 10);
     this.scene.add(fillLight);
 
     // Rim light for brass highlights - slightly warm
-    const rimLight = new THREE.DirectionalLight(0xfff0e0, 0.6);
+    const rimLight = new THREE.DirectionalLight(0xfff0e0, 0.4);
     rimLight.position.set(-5, 5, -8);
     this.scene.add(rimLight);
 
-    // Front fill for visibility
-    const frontFill = new THREE.DirectionalLight(0xffffff, 0.5);
+    // Front fill for visibility - gentle
+    const frontFill = new THREE.DirectionalLight(0xffffff, 0.3);
     frontFill.position.set(0, 5, 15);
     this.scene.add(frontFill);
   }

@@ -243,7 +243,7 @@ const getAppMenu = (app: import('./App').default) => {
 
   menu.addDivider();
 
-  menu.addMenuItem('🌐 &nbsp; Made by Yuv', {
+  menu.addMenuItem('🌐 &nbsp; Modified by Yuval Avidani (YUV.AI)', {
     href: 'https://yuv.ai',
   });
 
