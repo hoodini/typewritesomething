@@ -25,8 +25,10 @@ textInput.style.height = `${cursorHeight}px`;
 // top-left
 const initialPosVec = paddingVec;
 
-// Export for RTL newline calculation
+// Export for RTL calculations
 export const getRightMargin = () => window.innerWidth - paddingVec.x;
+export const getLeftMargin = () => paddingVec.x;
+export const getLetterWidth = () => letterWidth;
 
 export class Cursor {
   _cursorTimeout?: number;

@@ -5,9 +5,9 @@ import SavedList from './SavedList';
 import { textCanvas } from './helpers/getElements';
 
 /**
- * Exports the typewriter canvas as a vintage paper image
+ * Exports the typewriter canvas as a clean white paper image
  */
-const exportAsVintageImage = () => {
+const exportAsImage = () => {
   const { width, height } = textCanvas;
 
   // Create a new canvas for the export
@@ -16,47 +16,20 @@ const exportAsVintageImage = () => {
   exportCanvas.height = height;
   const ctx = exportCanvas.getContext('2d')!;
 
-  // Draw vintage paper background
-  // Base color - aged paper
-  ctx.fillStyle = '#f4e4c9';
+  // Draw clean white paper background
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
 
-  // Add subtle texture/noise for aged paper effect
+  // Add very subtle paper texture (optional, very light)
   const imageData = ctx.getImageData(0, 0, width, height);
   const { data } = imageData;
   for (let i = 0; i < data.length; i += 4) {
-    const noise = (Math.random() - 0.5) * 20;
-    data[i] = Math.min(255, Math.max(0, data[i] + noise)); // R
-    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise - 5)); // G
-    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise - 10)); // B
+    const noise = (Math.random() - 0.5) * 8; // Very subtle noise
+    data[i] = Math.min(255, Math.max(245, data[i] + noise)); // R - keep it white
+    data[i + 1] = Math.min(255, Math.max(245, data[i + 1] + noise)); // G
+    data[i + 2] = Math.min(255, Math.max(245, data[i + 2] + noise)); // B
   }
   ctx.putImageData(imageData, 0, 0);
-
-  // Add slight vignette effect (darker edges)
-  const gradient = ctx.createRadialGradient(
-    width / 2,
-    height / 2,
-    0,
-    width / 2,
-    height / 2,
-    Math.max(width, height) / 1.5
-  );
-  gradient.addColorStop(0, 'rgba(0,0,0,0)');
-  gradient.addColorStop(1, 'rgba(0,0,0,0.15)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-
-  // Add some coffee stain / age spots (subtle)
-  for (let i = 0; i < 3; i += 1) {
-    const x = Math.random() * width;
-    const y = Math.random() * height;
-    const radius = 20 + Math.random() * 40;
-    const spotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-    spotGradient.addColorStop(0, 'rgba(139, 90, 43, 0.08)');
-    spotGradient.addColorStop(1, 'rgba(139, 90, 43, 0)');
-    ctx.fillStyle = spotGradient;
-    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-  }
 
   // Draw the text canvas on top
   ctx.drawImage(textCanvas, 0, 0);
@@ -243,7 +216,7 @@ const getAppMenu = (app: import('./App').default) => {
   menu.addMenuItem('📷 &nbsp; Export as Image', {
     callback: () => {
       menu.closeMenu();
-      exportAsVintageImage();
+      exportAsImage();
       menuEvent('menu:export-image');
     },
   });

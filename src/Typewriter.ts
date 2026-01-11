@@ -1,5 +1,10 @@
 import Vector from './utils/Vector';
-import { Cursor } from './Cursor';
+import {
+  Cursor,
+  getRightMargin,
+  getLeftMargin,
+  getLetterWidth,
+} from './Cursor';
 import { Character } from './Character';
 import { container, cursorCtx, textCtx } from './helpers/getElements';
 import debounce from './utils/debounce';
@@ -76,9 +81,33 @@ export class TypeWriter implements TypeWriterClass {
     for (let i = 0, len = _chars.length; i < len; i += 1) {
       const char = _chars[i];
       const isRTL = isHebrewChar(char);
+      const wasRTL = this.isRTLMode;
 
       // Update RTL mode based on character type
       this.isRTLMode = isRTL;
+
+      // If switching to RTL and cursor is near left margin, jump to right margin
+      const leftMargin = getLeftMargin();
+      const letterWidth = getLetterWidth();
+      if (
+        isRTL &&
+        !wasRTL &&
+        this.cursor.position.x <= leftMargin + letterWidth * 2
+      ) {
+        this.cursor.update(
+          new Vector(getRightMargin(), this.cursor.position.y)
+        );
+      }
+
+      // If switching to LTR and cursor is near right margin, jump to left margin
+      const rightMargin = getRightMargin();
+      if (
+        !isRTL &&
+        wasRTL &&
+        this.cursor.position.x >= rightMargin - letterWidth * 2
+      ) {
+        this.cursor.update(new Vector(leftMargin, this.cursor.position.y));
+      }
 
       const {
         position: { x, y },
