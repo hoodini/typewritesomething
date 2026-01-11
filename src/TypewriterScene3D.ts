@@ -133,12 +133,12 @@ export class TypewriterScene3D {
 
   private keys: Map<string, THREE.Mesh> = new Map();
 
-  // Paper state
-  private paperPosition = { x: 50, y: 80 };
+  // Paper state (doubled for 1024x1280 canvas)
+  private paperPosition = { x: 100, y: 160 };
 
-  private lineHeight = 24;
+  private lineHeight = 48;
 
-  private charWidth = 14;
+  private charWidth = 28;
 
   // Animation state
   private inkSplatters: InkSplatter[] = [];
@@ -206,7 +206,7 @@ export class TypewriterScene3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.6; // Brighter exposure
+    this.renderer.toneMappingExposure = 1.0; // Balanced exposure
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.container.appendChild(this.renderer.domElement);
 
@@ -225,6 +225,12 @@ export class TypewriterScene3D {
     this.controls.enableZoom = true;
     this.controls.rotateSpeed = 0.5;
     this.controls.zoomSpeed = 0.8;
+    // Disable right-click pan to allow context menu
+    this.controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: undefined as unknown as THREE.MOUSE, // Allow right-click for context menu
+    };
 
     // Mobile optimizations
     if (this.isMobileDevice()) {
@@ -283,8 +289,8 @@ export class TypewriterScene3D {
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
     this.scene.add(hemiLight);
 
-    // Main key light - bright white with slight warmth
-    const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.5);
+    // Main key light - balanced white with slight warmth
+    const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.0);
     keyLight.position.set(-3, 12, 8);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 2048;
@@ -298,12 +304,12 @@ export class TypewriterScene3D {
     keyLight.shadow.camera.bottom = -10;
     this.scene.add(keyLight);
 
-    // Paper spotlight - bright white focused on typing area
-    const paperLight = new THREE.SpotLight(0xffffff, 2.5);
+    // Paper spotlight - gentle illumination on typing area
+    const paperLight = new THREE.SpotLight(0xffffff, 0.8);
     paperLight.position.set(0, 10, 2);
     paperLight.target.position.set(0, 5.5, -1.2);
-    paperLight.angle = Math.PI / 5;
-    paperLight.penumbra = 0.3;
+    paperLight.angle = Math.PI / 6;
+    paperLight.penumbra = 0.5;
     paperLight.castShadow = false;
     this.scene.add(paperLight);
     this.scene.add(paperLight.target);
@@ -633,8 +639,8 @@ export class TypewriterScene3D {
 
   private createPaper(): void {
     this.paperCanvas = document.createElement('canvas');
-    this.paperCanvas.width = 512;
-    this.paperCanvas.height = 640;
+    this.paperCanvas.width = 1024;
+    this.paperCanvas.height = 1280;
     this.paperCtx = this.paperCanvas.getContext('2d')!;
 
     this.clearPaper();
@@ -934,13 +940,13 @@ export class TypewriterScene3D {
       .padStart(2, '0');
     this.paperCtx.fillStyle = `#150904${alpha}`;
 
-    // Prestige Elite style (using Courier New as fallback)
-    this.paperCtx.font = 'bold 18px "Courier New", Courier, monospace';
+    // Prestige Elite style (using Courier New as fallback) - 36px for 1024x1280 canvas
+    this.paperCtx.font = 'bold 36px "Courier New", Courier, monospace';
     this.paperCtx.textBaseline = 'top';
 
-    // Typewriter imperfections
-    const offsetX = (Math.random() - 0.5) * 2.5;
-    const offsetY = (Math.random() - 0.5) * 2;
+    // Typewriter imperfections (doubled for larger canvas)
+    const offsetX = (Math.random() - 0.5) * 5;
+    const offsetY = (Math.random() - 0.5) * 4;
     const rotation = (Math.random() - 0.5) * 0.06;
 
     this.paperCtx.save();
@@ -954,7 +960,7 @@ export class TypewriterScene3D {
     // Occasional double-strike ghost (5% chance)
     if (Math.random() < 0.05) {
       this.paperCtx.fillStyle = `#15090420`;
-      this.paperCtx.fillText(char, 0.5, 0.5);
+      this.paperCtx.fillText(char, 1, 1);
     }
 
     this.paperCtx.restore();
@@ -962,7 +968,7 @@ export class TypewriterScene3D {
     this.paperTexture.needsUpdate = true;
     this.paperPosition.x += this.charWidth;
 
-    if (this.paperPosition.x > this.paperCanvas.width - 50) {
+    if (this.paperPosition.x > this.paperCanvas.width - 100) {
       this.handleNewline();
     }
 
@@ -973,11 +979,11 @@ export class TypewriterScene3D {
   }
 
   private handleNewline(): void {
-    this.paperPosition.x = 50;
+    this.paperPosition.x = 100;
     this.paperPosition.y += this.lineHeight;
     this.carriageTargetX = 0;
 
-    if (this.paperPosition.y > this.paperCanvas.height - 50) {
+    if (this.paperPosition.y > this.paperCanvas.height - 100) {
       this.scrollPaper();
     }
 
@@ -993,7 +999,7 @@ export class TypewriterScene3D {
     );
     this.clearPaper();
     this.paperCtx.putImageData(imageData, 0, 0);
-    this.paperPosition.y = this.paperCanvas.height - 100;
+    this.paperPosition.y = this.paperCanvas.height - 200;
   }
 
   private createInkSplatter(char: string): void {

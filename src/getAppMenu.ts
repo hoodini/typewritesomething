@@ -5,13 +5,13 @@ import SavedList from './SavedList';
 import { textCanvas } from './helpers/getElements';
 
 /**
- * Exports the typewriter canvas as a clean white paper image in 2K resolution
+ * Exports the typewriter canvas as a clean white paper image in 4K resolution
  * @param sourceCanvas - The canvas to export (2D textCanvas or 3D paperCanvas)
  */
 const exportAsImage = (sourceCanvas: HTMLCanvasElement) => {
-  // Target 2K resolution (2560x1440)
-  const targetWidth = 2560;
-  const targetHeight = 1440;
+  // Target 4K resolution (3840x2160) for maximum sharpness
+  const targetWidth = 3840;
+  const targetHeight = 2160;
 
   // Calculate scale factor from source canvas
   // Use Math.min to ensure content fits within export canvas (important for portrait-oriented 3D paper)
