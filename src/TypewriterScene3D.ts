@@ -16,7 +16,6 @@ const BURGUNDY_LEATHER = 0x6b1e2f; // Alternate housing / ribbon
 // Derived colors
 const KEY_COLOR = 0x2a2a2a; // Dark key caps
 const DESK_WOOD = 0x3d2b1f; // Dark wood desk
-const WARM_LIGHT = 0xffd4a3; // ~2700K warm desk lamp
 
 interface TypeBar {
   mesh: THREE.Mesh;
@@ -178,10 +177,9 @@ export class TypewriterScene3D {
     if (!el) throw new Error(`Container ${containerId} not found`);
     this.container = el;
 
-    // Scene setup - dark moody atmosphere
+    // Scene setup - clean bright studio look matching design system
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1a1a1e);
-    this.scene.fog = new THREE.Fog(0x1a1a1e, 15, 40);
+    this.scene.background = new THREE.Color(0x2a2a2a); // Neutral dark gray, not black
 
     // Camera - cinematic 3/4 view
     const preset = this.cameraPresets.default;
@@ -208,7 +206,7 @@ export class TypewriterScene3D {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.toneMappingExposure = 1.6; // Brighter exposure
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.container.appendChild(this.renderer.domElement);
 
@@ -251,81 +249,79 @@ export class TypewriterScene3D {
     const renderPass = new RenderPass(this.scene, this.camera);
     this.composer.addPass(renderPass);
 
-    // Bloom pass - subtle, for brass highlights
+    // Very subtle bloom for brass highlights only
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(
         this.container.clientWidth,
         this.container.clientHeight
       ),
-      0.3, // strength
-      0.4, // radius
-      0.85 // threshold
+      0.15, // strength - very subtle
+      0.3, // radius
+      0.9 // threshold - only bright highlights
     );
     this.composer.addPass(bloomPass);
 
-    // Vignette pass
+    // Very subtle vignette - just a touch
     const vignettePass = new ShaderPass(VignetteShader);
-    vignettePass.uniforms.offset.value = 0.95;
-    vignettePass.uniforms.darkness.value = 0.6;
+    vignettePass.uniforms.offset.value = 1.2;
+    vignettePass.uniforms.darkness.value = 0.2; // Much less dark
     this.composer.addPass(vignettePass);
 
-    // Color grading pass
+    // Minimal color grading - almost none
     const colorGradingPass = new ShaderPass(ColorGradingShader);
-    colorGradingPass.uniforms.warmth.value = 0.08;
-    colorGradingPass.uniforms.liftBlacks.value = 0.03;
+    colorGradingPass.uniforms.warmth.value = 0.02; // Almost no warmth
+    colorGradingPass.uniforms.liftBlacks.value = 0.01;
     this.composer.addPass(colorGradingPass);
   }
 
   private setupLights(): void {
-    // Reduced ambient for moody atmosphere
-    const ambient = new THREE.AmbientLight(0x404040, 0.3);
+    // Strong ambient light for overall brightness
+    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambient);
 
-    // Hemisphere light - subtle sky/ground
-    const hemiLight = new THREE.HemisphereLight(0xffeedd, 0x222222, 0.4);
+    // Hemisphere light - bright studio lighting
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
     this.scene.add(hemiLight);
 
-    // Main desk lamp - warm key light (~2700K)
-    const deskLamp = new THREE.SpotLight(WARM_LIGHT, 3.0);
-    deskLamp.position.set(-3, 12, 8);
-    deskLamp.target.position.set(0, 4, 0);
-    deskLamp.angle = Math.PI / 4;
-    deskLamp.penumbra = 0.6;
-    deskLamp.decay = 1.5;
-    deskLamp.distance = 30;
-    deskLamp.castShadow = true;
-    deskLamp.shadow.mapSize.width = 2048;
-    deskLamp.shadow.mapSize.height = 2048;
-    deskLamp.shadow.bias = -0.0001;
-    deskLamp.shadow.camera.near = 1;
-    deskLamp.shadow.camera.far = 30;
-    this.scene.add(deskLamp);
-    this.scene.add(deskLamp.target);
+    // Main key light - bright white with slight warmth
+    const keyLight = new THREE.DirectionalLight(0xfff8f0, 1.5);
+    keyLight.position.set(-3, 12, 8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 2048;
+    keyLight.shadow.mapSize.height = 2048;
+    keyLight.shadow.bias = -0.0001;
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 30;
+    keyLight.shadow.camera.left = -10;
+    keyLight.shadow.camera.right = 10;
+    keyLight.shadow.camera.top = 10;
+    keyLight.shadow.camera.bottom = -10;
+    this.scene.add(keyLight);
 
-    // Paper spotlight - focused on typing area
-    const paperLight = new THREE.SpotLight(0xffffff, 2.0);
+    // Paper spotlight - bright white focused on typing area
+    const paperLight = new THREE.SpotLight(0xffffff, 2.5);
     paperLight.position.set(0, 10, 2);
     paperLight.target.position.set(0, 5.5, -1.2);
-    paperLight.angle = Math.PI / 6;
-    paperLight.penumbra = 0.4;
+    paperLight.angle = Math.PI / 5;
+    paperLight.penumbra = 0.3;
     paperLight.castShadow = false;
     this.scene.add(paperLight);
     this.scene.add(paperLight.target);
 
-    // Subtle fill light - cool bias
-    const fillLight = new THREE.DirectionalLight(0xaabbcc, 0.3);
+    // Fill light from the right - neutral
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.8);
     fillLight.position.set(5, 6, 10);
     this.scene.add(fillLight);
 
-    // Rim light - catches brass edges
-    const rimLight = new THREE.DirectionalLight(WARM_LIGHT, 0.8);
+    // Rim light for brass highlights - slightly warm
+    const rimLight = new THREE.DirectionalLight(0xfff0e0, 0.6);
     rimLight.position.set(-5, 5, -8);
     this.scene.add(rimLight);
 
-    // Back light for depth
-    const backLight = new THREE.DirectionalLight(0x8888aa, 0.4);
-    backLight.position.set(0, 8, -12);
-    this.scene.add(backLight);
+    // Front fill for visibility
+    const frontFill = new THREE.DirectionalLight(0xffffff, 0.5);
+    frontFill.position.set(0, 5, 15);
+    this.scene.add(frontFill);
   }
 
   private createEnvironment(): void {
@@ -824,11 +820,20 @@ export class TypewriterScene3D {
       }
     });
 
-    // Camera preset shortcuts (when not typing)
+    // Camera preset shortcuts - use F1, F2, F3 to avoid conflict with typing
     window.addEventListener('keydown', (e) => {
-      if (e.key === '1' && !e.repeat) this.setCameraPreset('default');
-      if (e.key === '2' && !e.repeat) this.setCameraPreset('focus');
-      if (e.key === '3' && !e.repeat) this.setCameraPreset('desk');
+      if (e.key === 'F1' && !e.repeat) {
+        e.preventDefault();
+        this.setCameraPreset('default');
+      }
+      if (e.key === 'F2' && !e.repeat) {
+        e.preventDefault();
+        this.setCameraPreset('focus');
+      }
+      if (e.key === 'F3' && !e.repeat) {
+        e.preventDefault();
+        this.setCameraPreset('desk');
+      }
     });
   }
 

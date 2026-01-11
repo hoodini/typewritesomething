@@ -134,14 +134,19 @@ class App {
     const isMeta = e.altKey || e.ctrlKey || e.metaKey;
     if (isMeta) return;
 
+    // Skip function keys (used for camera presets)
+    if (e.key.startsWith('F') && e.key.length <= 3) return;
+
     const { key } = e;
 
     if (key === 'Enter') {
       this.scene3D.newline();
       newlineAudio.play();
+      e.preventDefault();
     } else if (key === 'Backspace') {
       this.scene3D.backspace();
       keypressAudio.play();
+      e.preventDefault();
     } else if (key === 'Tab') {
       // Add tab spaces
       for (let i = 0; i < 4; i += 1) {
@@ -150,8 +155,10 @@ class App {
       keypressAudio.play();
       e.preventDefault();
     } else if (key.length === 1) {
-      // Single character
+      // Single character - play audio and prevent default
       this.scene3D.typeCharacter(key);
+      keypressAudio.play();
+      e.preventDefault();
     }
   };
 

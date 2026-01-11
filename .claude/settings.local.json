@@ -9,7 +9,17 @@
       "Bash(gh repo create:*)",
       "Bash(git remote:*)",
       "Bash(git checkout:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(npm run build:*)",
+      "Bash(git fetch:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(npm run predeploy:*)",
+      "Bash(gh api:*)",
+      "Bash(git worktree:*)",
+      "Bash(curl:*)",
+      "Bash(git reset:*)",
+      "Bash(npm run:*)"
     ]
   }
 }
