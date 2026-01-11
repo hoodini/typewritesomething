@@ -10,15 +10,18 @@ import './tracking/analytics';
 const splash = document.getElementById('splash')!;
 
 const startApp = (e: KeyboardEvent | MouseEvent | TouchEvent): void => {
-  if (e.altKey || e.ctrlKey || e.metaKey) {
+  if ('altKey' in e && (e.altKey || e.ctrlKey || e.metaKey)) {
     // user might be trying to do something else
     return;
   }
 
   splash.classList.add('hide');
 
+  // Remove all event listeners
   splash.removeEventListener('click', startApp);
+  splash.removeEventListener('touchend', startApp);
   splash.removeEventListener('keyup', startApp);
+  document.removeEventListener('keydown', startApp);
 
   const app = new App();
 
@@ -36,8 +39,12 @@ const onload = (): void => {
 
   splash.focus();
 
+  // Multiple event listeners for better cross-browser/device support
   splash.addEventListener('click', startApp);
+  splash.addEventListener('touchend', startApp);
   splash.addEventListener('keyup', startApp);
+  // Also listen on document for keyboard events in case splash doesn't have focus
+  document.addEventListener('keydown', startApp);
 
   window.removeEventListener('load', onload);
 };
