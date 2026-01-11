@@ -14,9 +14,10 @@ const exportAsImage = (sourceCanvas: HTMLCanvasElement) => {
   const targetHeight = 1440;
 
   // Calculate scale factor from source canvas
+  // Use Math.min to ensure content fits within export canvas (important for portrait-oriented 3D paper)
   const scaleX = targetWidth / sourceCanvas.width;
   const scaleY = targetHeight / sourceCanvas.height;
-  const scale = Math.max(scaleX, scaleY);
+  const scale = Math.min(scaleX, scaleY);
 
   // Create a new canvas for the export at 2K resolution
   const exportCanvas = document.createElement('canvas');
