@@ -2,10 +2,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 // Constants for the typewriter
-const TYPEWRITER_COLOR = 0x2a2a2a; // Dark charcoal
-const ACCENT_COLOR = 0x8b4513; // Saddle brown for wood accents
-const METAL_COLOR = 0x4a4a4a; // Metallic gray
-const KEY_COLOR = 0x1a1a1a; // Black keys
+const TYPEWRITER_COLOR = 0x4a4a4a; // Medium gray for visibility
+const ACCENT_COLOR = 0xb87333; // Copper/bronze for accents
+const METAL_COLOR = 0x7a7a7a; // Lighter metallic gray
 
 interface TypeBar {
   mesh: THREE.Mesh;
@@ -78,7 +77,7 @@ export class TypewriterScene3D {
 
     // Scene setup
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1a1a2e); // Dark blue ambient
+    this.scene.background = new THREE.Color(0x2d3748); // Slate gray background
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(
@@ -102,6 +101,8 @@ export class TypewriterScene3D {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Ensure proper color rendering
+    this.renderer.toneMapping = THREE.NoToneMapping;
     this.container.appendChild(this.renderer.domElement);
 
     // Orbit controls for camera rotation (works with mouse and touch)
@@ -116,7 +117,6 @@ export class TypewriterScene3D {
     // Mobile touch support
     this.controls.enablePan = true;
     this.controls.enableZoom = true;
-    this.controls.touchAction = 'none'; // Prevent browser scroll interference
     this.controls.rotateSpeed = 0.8;
     this.controls.zoomSpeed = 1.2;
     this.controls.panSpeed = 0.8;
@@ -137,54 +137,51 @@ export class TypewriterScene3D {
   }
 
   private setupLights(): void {
-    // Ambient light for soft overall illumination
-    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    // Strong ambient light for overall visibility
+    const ambient = new THREE.AmbientLight(0xffffff, 1.5);
     this.scene.add(ambient);
 
     // Hemisphere light for natural sky/ground lighting
-    const hemiLight = new THREE.HemisphereLight(0xffeeb1, 0x080820, 0.4);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
     this.scene.add(hemiLight);
 
-    // Main key light (warm desk lamp feel) - positioned like an overhead lamp
-    const keyLight = new THREE.SpotLight(0xfff5e6, 2.0);
-    keyLight.position.set(0, 20, 8);
-    keyLight.angle = Math.PI / 5;
-    keyLight.penumbra = 0.6;
-    keyLight.decay = 1.5;
+    // Main key light - bright overhead
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    keyLight.position.set(5, 15, 10);
     keyLight.castShadow = true;
     keyLight.shadow.mapSize.width = 2048;
     keyLight.shadow.mapSize.height = 2048;
     keyLight.shadow.bias = -0.0001;
     this.scene.add(keyLight);
 
-    // Secondary spotlight for paper illumination
-    const paperLight = new THREE.SpotLight(0xffffff, 1.2);
-    paperLight.position.set(0, 12, 0);
-    paperLight.target.position.set(0, 5.5, -1.2); // Aim at paper
-    paperLight.angle = Math.PI / 6;
-    paperLight.penumbra = 0.8;
+    // Front fill light - illuminate the keyboard
+    const frontLight = new THREE.DirectionalLight(0xffffff, 2.0);
+    frontLight.position.set(0, 8, 15);
+    this.scene.add(frontLight);
+
+    // Paper spotlight - strong light on the paper area
+    const paperLight = new THREE.SpotLight(0xffffff, 4.0);
+    paperLight.position.set(0, 12, 2);
+    paperLight.target.position.set(0, 5.5, -1.2);
+    paperLight.angle = Math.PI / 4;
+    paperLight.penumbra = 0.5;
     this.scene.add(paperLight);
     this.scene.add(paperLight.target);
 
-    // Fill light from the right (cool tone for contrast)
-    const fillLight = new THREE.DirectionalLight(0xe6f0ff, 0.4);
-    fillLight.position.set(8, 6, 5);
-    this.scene.add(fillLight);
+    // Left fill light
+    const leftFill = new THREE.DirectionalLight(0xffffff, 1.5);
+    leftFill.position.set(-10, 8, 5);
+    this.scene.add(leftFill);
 
-    // Back fill light (soft)
-    const backFill = new THREE.DirectionalLight(0xffffff, 0.2);
-    backFill.position.set(-5, 8, -8);
-    this.scene.add(backFill);
+    // Right fill light
+    const rightFill = new THREE.DirectionalLight(0xffffff, 1.5);
+    rightFill.position.set(10, 8, 5);
+    this.scene.add(rightFill);
 
-    // Warm rim light for dramatic edge highlights
-    const rimLight = new THREE.PointLight(0xff9966, 0.6);
-    rimLight.position.set(-12, 6, -3);
-    this.scene.add(rimLight);
-
-    // Cool accent light from opposite side
-    const accentLight = new THREE.PointLight(0x6699ff, 0.3);
-    accentLight.position.set(12, 4, 2);
-    this.scene.add(accentLight);
+    // Back light for depth
+    const backLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    backLight.position.set(0, 10, -10);
+    this.scene.add(backLight);
   }
 
   private createTypewriter(): void {
@@ -264,38 +261,44 @@ export class TypewriterScene3D {
     // Key layout (QWERTY simplified)
     const rows = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 
-    const keyGeometry = new THREE.CylinderGeometry(0.25, 0.28, 0.15, 16);
-    const keyMaterial = new THREE.MeshStandardMaterial({
-      color: KEY_COLOR,
-      roughness: 0.4,
-      metalness: 0.6,
-    });
+    const keyGeometry = new THREE.CylinderGeometry(0.22, 0.26, 0.18, 16);
 
     rows.forEach((row, rowIndex) => {
-      const rowOffset = rowIndex * 0.15; // Stagger offset
-      const y = 3.2 - rowIndex * 0.1;
-      const z = 2.5 - rowIndex * 0.6;
+      const rowOffset = rowIndex * 0.12;
+      const y = 3.1 - rowIndex * 0.15;
+      const z = 2.2 - rowIndex * 0.55;
 
       for (let i = 0; i < row.length; i += 1) {
         const char = row[i];
-        const x = (i - row.length / 2 + 0.5) * 0.55 + rowOffset * 0.3;
+        const x = (i - row.length / 2 + 0.5) * 0.52 + rowOffset * 0.25;
 
-        const key = new THREE.Mesh(keyGeometry.clone(), keyMaterial.clone());
+        // Each key has a dark body with lighter top
+        const keyMaterial = new THREE.MeshStandardMaterial({
+          color: 0x3a3a3a,
+          roughness: 0.5,
+          metalness: 0.4,
+        });
+
+        const key = new THREE.Mesh(keyGeometry.clone(), keyMaterial);
         key.position.set(x, y, z);
-        key.rotation.x = (Math.PI / 8) * (rowIndex + 1);
+        key.rotation.x = (Math.PI / 10) * (rowIndex + 1);
         key.castShadow = true;
 
-        // Add letter label on key (using a small plane with texture would be better)
         this.keys.set(char, key);
         keyboardGroup.add(key);
       }
     });
 
-    // Space bar
-    const spaceGeometry = new THREE.BoxGeometry(3, 0.15, 0.4);
-    const spaceBar = new THREE.Mesh(spaceGeometry, keyMaterial.clone());
-    spaceBar.position.set(0, 2.8, 4);
-    spaceBar.rotation.x = Math.PI / 6;
+    // Space bar - wider and more prominent
+    const spaceGeometry = new THREE.BoxGeometry(2.8, 0.12, 0.35);
+    const spaceMaterial = new THREE.MeshStandardMaterial({
+      color: 0x3a3a3a,
+      roughness: 0.5,
+      metalness: 0.4,
+    });
+    const spaceBar = new THREE.Mesh(spaceGeometry, spaceMaterial);
+    spaceBar.position.set(0, 2.6, 3.5);
+    spaceBar.rotation.x = Math.PI / 8;
     this.keys.set(' ', spaceBar);
     keyboardGroup.add(spaceBar);
 
@@ -431,20 +434,16 @@ export class TypewriterScene3D {
     this.paperTexture = new THREE.CanvasTexture(this.paperCanvas);
     this.paperTexture.needsUpdate = true;
 
-    // Paper mesh
+    // Paper mesh - white paper with texture
     const paperGeometry = new THREE.PlaneGeometry(4, 5);
-    const paperMaterial = new THREE.MeshStandardMaterial({
+    const paperMaterial = new THREE.MeshBasicMaterial({
       map: this.paperTexture,
-      roughness: 0.9,
-      metalness: 0,
-      side: THREE.DoubleSide,
+      side: THREE.FrontSide,
     });
 
     this.paper = new THREE.Mesh(paperGeometry, paperMaterial);
-    this.paper.position.set(0, 6.5, -1.2);
-    this.paper.rotation.x = -Math.PI / 12; // Slight tilt following platen curve
-    this.paper.castShadow = true;
-    this.paper.receiveShadow = true;
+    this.paper.position.set(0, 6.5, -1.0);
+    this.paper.rotation.x = -Math.PI / 15; // Slight tilt following platen curve
 
     this.carriage.add(this.paper);
   }
@@ -492,33 +491,38 @@ export class TypewriterScene3D {
     plate.rotation.x = Math.PI / 6;
     this.typewriterBody.add(plate);
 
-    // Carriage return lever
-    const leverGeometry = new THREE.CylinderGeometry(0.08, 0.08, 2, 8);
+    // Carriage return lever - attached to the left side of the carriage
+    const leverGroup = new THREE.Group();
+
+    const leverGeometry = new THREE.CylinderGeometry(0.06, 0.06, 1.5, 8);
     const leverMaterial = new THREE.MeshStandardMaterial({
       color: METAL_COLOR,
       roughness: 0.3,
       metalness: 0.8,
     });
     const lever = new THREE.Mesh(leverGeometry, leverMaterial);
-    lever.position.set(5.5, 5.5, -1.2);
-    lever.rotation.z = Math.PI / 4;
-    this.typewriterBody.add(lever);
+    lever.rotation.z = Math.PI / 3;
+    lever.position.set(-0.5, 0.5, 0);
 
-    // Lever handle
-    const handleGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+    // Lever handle (knob at end)
+    const handleGeometry = new THREE.SphereGeometry(0.15, 16, 16);
     const handleMaterial = new THREE.MeshStandardMaterial({
       color: ACCENT_COLOR,
       roughness: 0.5,
       metalness: 0.3,
     });
     const handle = new THREE.Mesh(handleGeometry, handleMaterial);
-    handle.position.set(6.2, 6.2, -1.2);
-    this.typewriterBody.add(handle);
+    handle.position.set(-1.1, 0.9, 0);
 
-    // Ribbon spools
-    const spoolGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
+    leverGroup.add(lever);
+    leverGroup.add(handle);
+    leverGroup.position.set(-4.5, 5.5, -1.2);
+    this.carriage.add(leverGroup);
+
+    // Ribbon spools - positioned on the typewriter body
+    const spoolGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.25, 16);
     const spoolMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1a1a1a,
+      color: 0x2a2a2a,
       roughness: 0.7,
       metalness: 0.3,
     });
@@ -532,9 +536,9 @@ export class TypewriterScene3D {
     this.typewriterBody.add(rightSpool);
 
     // Ink ribbon between spools
-    const ribbonGeometry = new THREE.BoxGeometry(2.5, 0.02, 0.3);
+    const ribbonGeometry = new THREE.BoxGeometry(2.5, 0.02, 0.25);
     const ribbonMaterial = new THREE.MeshStandardMaterial({
-      color: 0x0a0a0a,
+      color: 0x1a1a1a,
       roughness: 0.9,
       metalness: 0,
     });
