@@ -5,3 +5,4 @@ coverage/
 .eslintcache
 /sw.js
 .DS_Store
+.deploy
